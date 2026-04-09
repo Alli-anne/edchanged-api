@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 
-// For demonstration purposes, using email domain to decide free or paid
-const SCHOOL_DOMAINS = ['school.edu', 'university.edu']; // add valid school domains
+const SCHOOL_DOMAINS = ['school.edu', 'university.edu'];
 
-// OAuth login/register route
+// POST /api/auth/oauth
 router.post('/oauth', async (req, res) => {
   const { name, email, oauthProvider, oauthId } = req.body;
 
@@ -13,44 +12,48 @@ router.post('/oauth', async (req, res) => {
     return res.status(400).json({ message: 'Missing required OAuth info' });
   }
 
-  // Check if user exists
-  let user = await User.findOne({ email });
-
-  if (!user) {
-    // Determine if user is eligible for free account
-    const domain = email.split('@')[1];
-    const isFree = SCHOOL_DOMAINS.includes(domain);
-
-    user = new User({
-      name,
-      email,
-      oauthProvider,
-      oauthId,
-      isFree,
-      school: isFree ? domain : null
-    });
-
-    await user.save();
-  }
-
-  // Response
-  res.json({
-    message: 'User logged in',
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      isFree: user.isFree
-    }
-  });
-});
-app.get('/test-users', async (req, res) => {
   try {
-    const users = await User.find();
-    res.json({ users });
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const domain = email.split('@')[1];
+      const isFree = SCHOOL_DOMAINS.includes(domain);
+
+      user = new User({
+        name,
+        email,
+        oauthProvider,
+        oauthId,
+        isFree,
+        school: isFree ? domain : null
+      });
+
+      await user.save();
+    }
+
+    res.json({
+      message: 'User logged in',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isFree: user.isFree
+      }
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// GET /api/auth/test-users  — see all users in the DB
+router.get('/test-users', async (req, res) => {
+  try {
+    const users = await User.find().select('-__v');
+    res.json({ count: users.length, users });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
