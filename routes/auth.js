@@ -57,13 +57,5 @@ router.get('/test-users', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-router.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get('/api/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    res.send(`Logged in as ${req.user.email}`);
-  }
-);
 
 module.exports = router;
