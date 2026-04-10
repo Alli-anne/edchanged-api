@@ -96,11 +96,15 @@ app.get('/api/health', async (req, res) => {
 // ── Routes ───────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 
-app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/api/auth/google/callback',
+app.get(
+  '/api/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+app.get(
+  '/api/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    res.redirect('/dashboard');
+    res.send(`Logged in as ${req.user.email}`);
   }
 );
 
